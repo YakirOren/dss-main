@@ -1,0 +1,35 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3.10-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - dss_network
+  main:
+    env_file:
+      - envs/.main_env
+    image: yakiroren/dss-main:latest
+    restart: always
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8080:8080"
+    build:
+      context: ../../dss-main
+      dockerfile: build/Dockerfile
+    networks:
+      - dss_network
+  uploader:
+    env_file:
+      - envs/.uploader_env
+    restart: always
+    image: yakiroren/dss-uploader:latest
+    depends_on:
+      - rabbitmq
+    networks:
+      - dss_network
+
+networks:
+  dss_network:

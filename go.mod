@@ -3,7 +3,7 @@ module dss-main
 go 1.19
 
 require (
-	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/caarlos0/env/v7 v7.1.0
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/rabbitmq/amqp091-go v1.8.0
 	github.com/sirupsen/logrus v1.9.0

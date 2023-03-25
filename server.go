@@ -5,11 +5,10 @@ import (
 	"dss-main/server"
 	"dss-main/sizes"
 	"fmt"
-	"github.com/caarlos0/env"
-	log "github.com/sirupsen/logrus"
-
+	"github.com/caarlos0/env/v7"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -33,7 +32,7 @@ func main() {
 
 	app.Use(recover.New())
 
-	app.Post("/", srv.Upload)
+	app.Post("/upload", srv.Upload)
 
 	if err := app.Listen(fmt.Sprintf(":%s", conf.Port)); err != nil {
 		log.Fatal(err)

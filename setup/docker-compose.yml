@@ -2,6 +2,7 @@ version: '3'
 services:
   rabbitmq:
     image: rabbitmq:3.10-management
+    restart: unless-stopped
     ports:
       - '5672:5672'
       - '15672:15672'
@@ -16,9 +17,6 @@ services:
       - rabbitmq
     ports:
       - "8080:8080"
-    build:
-      context: ../../dss-main
-      dockerfile: build/Dockerfile
     networks:
       - dss_network
   uploader:
@@ -30,6 +28,8 @@ services:
       - rabbitmq
     networks:
       - dss_network
+
+
 
 networks:
   dss_network:

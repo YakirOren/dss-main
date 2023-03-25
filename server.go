@@ -3,6 +3,7 @@ package main
 import (
 	"dss-main/config"
 	"dss-main/server"
+	"dss-main/sizes"
 	"fmt"
 	"github.com/caarlos0/env"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +13,8 @@ import (
 )
 
 func main() {
-	conf := new(config.Config)
+	conf := &config.Config{}
+
 	if err := env.Parse(conf); err != nil {
 		log.Fatal(err)
 	}
@@ -25,7 +27,9 @@ func main() {
 
 	defer srv.Close()
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: sizes.Gib,
+	})
 
 	app.Use(recover.New())
 

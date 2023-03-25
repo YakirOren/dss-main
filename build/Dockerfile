@@ -5,8 +5,9 @@ ENV CGO_ENABLED=0
 
 COPY go.* ./
 
-COPY server.go server.go
+COPY sizes sizes
 COPY config config
+COPY server.go server.go
 COPY server server
 
 RUN go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o /go/bin/main server.go

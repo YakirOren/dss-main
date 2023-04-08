@@ -2,9 +2,12 @@ package config
 
 import log "github.com/sirupsen/logrus"
 
+import "github.com/yakiroren/dss-common/db"
+
 type Config struct {
-	Port      string    `env:"PORT,required,notEmpty"`
-	RabbitUrl string    `env:"RABBIT_URL,required,notEmpty"`
-	QueueName string    `env:"QUEUE_NAME,required,notEmpty"`
-	LogLevel  log.Level `env:"LOG_LEVEL,required,notEmpty"`
+	Port      string    `env:",required,notEmpty"`
+	RabbitUrl string    `env:",required,notEmpty"`
+	QueueName string    `env:",required,notEmpty"`
+	LogLevel  log.Level `env:",required,notEmpty"`
+	Mongo     db.MongoConfig
 }

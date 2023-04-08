@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"context"
 	"dss-main/config"
-	"dss-main/sizes"
 	"fmt"
+	"github.com/docker/go-units"
+	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v2"
 	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
@@ -21,6 +22,8 @@ type Server struct {
 	Channel *amqp.Channel
 	Queue   amqp.Queue
 }
+
+const DefaultFileLimit = units.MiB * 8
 
 func NewServer(conf *config.Config) (*Server, error) {
 	conn, channel, err := Connect(conf)
@@ -71,8 +74,7 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	log.Info("got file with size ", file.Size)
-
+	log.Info("got file with size ", humanize.IBytes(uint64(file.Size)))
 	src, err := file.Open()
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -86,12 +88,14 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 		}
 	}(src)
 
-	totalFragments := int(math.Ceil(float64(file.Size) / sizes.DefaultFileLimit))
+	totalFragments := int(math.Ceil(float64(file.Size) / DefaultFileLimit))
 
 	content := &bytes.Buffer{}
 
+	log.Info("Total fragments ", totalFragments)
+
 	for i := 1; i <= totalFragments; i++ {
-		io.CopyN(content, src, sizes.DefaultFileLimit)
+		io.CopyN(content, src, DefaultFileLimit)
 
 		publishContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -99,7 +103,7 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 		err = s.Channel.PublishWithContext(publishContext,
 			"",           // exchange
 			s.Queue.Name, // routing key
-			false,        // mandatory
+			true,         // mandatory
 			false,        // immediate
 			amqp.Publishing{
 				DeliveryMode: amqp.Persistent,
@@ -113,6 +117,8 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 			ctx.Status(http.StatusInternalServerError)
 			return fmt.Errorf("upload failed")
 		}
+
+		log.Debug("pushed fragment number ", i)
 
 		content.Reset()
 	}

@@ -5,7 +5,6 @@ ENV CGO_ENABLED=0
 
 COPY go.* ./
 
-COPY sizes sizes
 COPY config config
 COPY server.go server.go
 COPY server server

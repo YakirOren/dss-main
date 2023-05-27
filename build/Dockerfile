@@ -1,4 +1,4 @@
-FROM golang:1.17 AS base
+FROM golang:1.19 AS base
 
 WORKDIR MAIN
 ENV CGO_ENABLED=0

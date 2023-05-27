@@ -14,7 +14,7 @@ import (
 func (client Client) ReadFragments(ctx context.Context, fragments []models.Fragment) (io.ReadCloser, error) {
 	var readers []io.ReadCloser
 
-	sortedFragments := sortFragments(fragments)
+	sortedFragments := SortFragments(fragments)
 	for _, fragment := range sortedFragments {
 		contentReader, err := client.getFragmentContent(ctx, fragment)
 		if err != nil {
@@ -28,7 +28,7 @@ func (client Client) ReadFragments(ctx context.Context, fragments []models.Fragm
 	return contentMultiReader, nil
 }
 
-func sortFragments(fragments []models.Fragment) []models.Fragment {
+func SortFragments(fragments []models.Fragment) []models.Fragment {
 	sort.Slice(fragments, func(i, j int) bool {
 		a, _ := strconv.Atoi(fragments[i].Name)
 		b, _ := strconv.Atoi(fragments[j].Name)
@@ -40,6 +40,7 @@ func sortFragments(fragments []models.Fragment) []models.Fragment {
 }
 
 func (client Client) getFragmentContent(ctx context.Context, fragment models.Fragment) (*storage.Reader, error) {
-	obj := client.gcloud.Bucket(client.bucketName).Object(fmt.Sprintf("attachments/%s/%s/%s", fragment.ChannelID, fragment.MessageID, fragment.Name))
-	return obj.NewReader(ctx)
+	obj := client.gcloud.Bucket(client.bucketName)
+	bucket := obj.Object(fmt.Sprintf("attachments/%s/%s/%s", fragment.ChannelID, fragment.MessageID, fragment.Name))
+	return bucket.NewReader(ctx)
 }

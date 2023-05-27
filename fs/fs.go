@@ -4,9 +4,10 @@ import (
 	"context"
 	"dss-main/storage"
 	"errors"
-	"github.com/yakiroren/dss-common/db"
 	"net/http"
 	"strings"
+
+	"github.com/yakiroren/dss-common/db"
 )
 
 type FS struct {
@@ -20,14 +21,15 @@ func (fs FS) Open(path string) (http.File, error) {
 	}
 
 	metadata, found := fs.datastore.GetMetadataByPath(context.Background(), path)
-	if found != true {
+	if !found {
 		return nil, errors.New("file not found")
 	}
 
 	return &File{
 		metadata:  metadata,
 		storage:   fs.storage,
-		datastore: fs.datastore}, nil
+		datastore: fs.datastore,
+	}, nil
 }
 
 func New(store db.DataStore) (*FS, error) {

@@ -1,15 +1,17 @@
-package storage
+package storage_test
 
 import (
-	"github.com/yakiroren/dss-common/models"
+	"dss-main/storage"
 	"testing"
+
+	"github.com/yakiroren/dss-common/models"
 
 	"github.com/stretchr/testify/require"
 )
 
 func Test_sortFragments(t *testing.T) {
 	require.Equal(t,
-		sortFragments(unsortedFragments()),
+		storage.SortFragments(unsortedFragments()),
 		sortedFragments())
 }
 

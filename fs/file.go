@@ -4,10 +4,12 @@ import (
 	"context"
 	"dss-main/storage"
 	"errors"
-	"github.com/yakiroren/dss-common/db"
-	"github.com/yakiroren/dss-common/models"
 	"io"
 	"io/fs"
+	"path/filepath"
+
+	"github.com/yakiroren/dss-common/db"
+	"github.com/yakiroren/dss-common/models"
 )
 
 type File struct {
@@ -46,7 +48,7 @@ func (f File) Readdir(count int) ([]fs.FileInfo, error) {
 		return nil, errors.New("file is not a directory")
 	}
 
-	listFiles, err := f.datastore.ListFiles(context.Background(), f.metadata.Path)
+	listFiles, err := f.datastore.ListFiles(context.Background(), filepath.Join(f.metadata.Path, f.metadata.FileName))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +56,8 @@ func (f File) Readdir(count int) ([]fs.FileInfo, error) {
 	var files []fs.FileInfo
 
 	for _, v := range listFiles {
-		if v.Path == f.metadata.Path {
+		// don't return itself
+		if v.Name() == f.metadata.Path {
 			continue
 		}
 
@@ -65,8 +68,8 @@ func (f File) Readdir(count int) ([]fs.FileInfo, error) {
 }
 
 func (f *File) Stat() (fs.FileInfo, error) {
-	metadata, found := f.datastore.GetMetadataByPath(context.Background(), f.metadata.Path)
-	if found != true {
+	metadata, found := f.datastore.GetMetadataByID(context.Background(), f.metadata.Id)
+	if !found {
 		return nil, nil
 	}
 

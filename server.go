@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"dss-main/config"
 	"dss-main/fs"
 	"dss-main/server"
 	"fmt"
+
 	"github.com/caarlos0/env/v7"
 	"github.com/docker/go-units"
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +18,8 @@ import (
 	"github.com/yakiroren/dss-common/db"
 )
 
+const maxAge = 3600
+
 func main() {
 	conf := &config.Config{}
 	opts := env.Options{UseFieldNameByDefault: true}
@@ -25,7 +29,12 @@ func main() {
 	}
 	log.SetLevel(conf.LogLevel)
 
-	srv, err := server.NewServer(conf)
+	store, err := db.NewMongoDataStore(&conf.Mongo)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	srv, err := server.NewServer(conf, store)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,29 +47,34 @@ func main() {
 
 	app.Use(recover.New())
 	app.Use(logger.New())
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "MyService Metrics Page"}))
+	app.Get("/metrics", monitor.New(monitor.Config{Title: "dss-main Metrics Page"}))
 
 	app.Post("/upload", srv.Upload)
+	app.Post("/mkdir", srv.Mkdir)
 
-	store, err := db.NewMongoDataStore(&conf.Mongo)
-	if err != nil {
-		log.Fatal(err)
-	}
+	app.Post("/rename", srv.Rename)
 
-	myfs, err := fs.New(store)
+	dfs, err := fs.New(store)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 
 	app.Use(
 		filesystem.New(filesystem.Config{
-			Root:   myfs,
+			Root:   dfs,
 			Browse: true,
 			Index:  "/",
-			MaxAge: 3600,
+			MaxAge: maxAge,
 		}))
 
-	if err := app.Listen(fmt.Sprintf(":%s", conf.Port)); err != nil {
-		log.Fatal(err)
+	_, err = dfs.Open("/")
+	if err != nil {
+		if err := srv.CreateDir(context.Background(), "/", "/"); err != nil {
+			log.Fatal(err)
+		}
+		log.Info("created root dir")
 	}
+
+	serverAddr := fmt.Sprintf(":%s", conf.Port)
+	log.Error(app.Listen(serverAddr))
 }

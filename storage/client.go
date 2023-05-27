@@ -8,6 +8,8 @@ import (
 	"google.golang.org/api/option"
 )
 
+const bucketName = "discord"
+
 type Client struct {
 	gcloud     *storage.Client
 	bucketName string
@@ -20,6 +22,5 @@ func NewClient() (*Client, error) {
 		return nil, err
 	}
 
-	const bucketName = "discord"
 	return &Client{gcloud: client, bucketName: bucketName}, nil
 }

@@ -53,6 +53,7 @@ func main() {
 	app.Post("/mkdir", srv.Mkdir)
 
 	app.Post("/rename", srv.Rename)
+	app.Get("/status/:id", srv.Status)
 
 	dfs, err := fs.New(store)
 	if err != nil {

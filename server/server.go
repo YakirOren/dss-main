@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"dss-main/config"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -140,7 +141,8 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 	fileID, err := s.datastore.WriteFile(ctx.Context(), models.FileMetadata{
 		Id:             primitive.NewObjectID(),
 		FileName:       filename,
-		FileSize:       0,
+		FileSize:       file.Size,
+		CurrentSize:    0,
 		IsDirectory:    false,
 		Path:           targetPath,
 		Fragments:      []models.Fragment{},
@@ -156,6 +158,7 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	ctx.Status(http.StatusCreated).SendString(fileID)
 	return nil
 }
 
@@ -197,6 +200,46 @@ func (s *Server) Rename(ctx *fiber.Ctx) error {
 	newpath := ctx.FormValue("newpath")
 	if newpath == "" {
 		return fiber.NewError(http.StatusBadRequest, "newpath cant be empty")
+	}
+
+	return nil
+}
+
+func (s *Server) Status(ctx *fiber.Ctx) error {
+	objectID := ctx.Params("id")
+
+	hex, err := primitive.ObjectIDFromHex(objectID)
+	if err != nil {
+		return err
+	}
+
+	metadata, exists := s.datastore.GetMetadataByID(ctx.Context(), hex)
+
+	if !exists {
+		return fiber.NewError(http.StatusNotFound, "file not found")
+	}
+
+	state := "done"
+	if metadata.TotalFragments != len(metadata.Fragments) {
+		state = "in progress"
+	}
+
+	marshal, err := json.Marshal(struct {
+		State             string
+		TotalFragments    int
+		UploadedFragments int
+	}{
+		State:             state,
+		TotalFragments:    metadata.TotalFragments,
+		UploadedFragments: len(metadata.Fragments),
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := ctx.Send(marshal); err != nil {
+		ctx.Status(http.StatusInternalServerError)
+		return nil
 	}
 
 	return nil

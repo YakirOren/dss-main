@@ -4,10 +4,11 @@ WORKDIR MAIN
 ENV CGO_ENABLED=0
 
 COPY go.* ./
-
-COPY config config
-COPY server.go server.go
 COPY server server
+COPY server.go server.go
+COPY config config
+COPY fs fs
+COPY storage storage
 
 RUN go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o /go/bin/main server.go
 

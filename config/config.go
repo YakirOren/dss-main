@@ -1,14 +1,15 @@
 package config
 
 import (
+	"dss-main/server/rabbit"
 	log "github.com/sirupsen/logrus"
 	"github.com/yakiroren/dss-common/db"
 )
 
 type Config struct {
-	Port      string    `env:",required,notEmpty"`
-	RabbitURL string    `env:"RABBIT_URL,required,notEmpty"`
-	QueueName string    `env:",required,notEmpty"`
-	LogLevel  log.Level `env:",required,notEmpty"`
-	Mongo     db.MongoConfig
+	Port         string    `env:",required,notEmpty"`
+	LogLevel     log.Level `env:",required,notEmpty"`
+	FragmentSize int64     `env:",required,notEmpty"`
+	Publisher    rabbit.Config
+	Mongo        db.MongoConfig
 }

@@ -6,13 +6,13 @@ import (
 	"dss-main/fs"
 	"dss-main/server"
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/caarlos0/env/v7"
 	"github.com/docker/go-units"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	log "github.com/sirupsen/logrus"
 	"github.com/yakiroren/dss-common/db"
@@ -25,21 +25,19 @@ func main() {
 	opts := env.Options{UseFieldNameByDefault: true}
 
 	if err := env.Parse(conf, opts); err != nil {
-		log.Fatal(err)
+		log.Fatal("config parsing failed:", err)
 	}
 	log.SetLevel(conf.LogLevel)
 
 	store, err := db.NewMongoDataStore(&conf.Mongo)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("could not connect to mongodb:", err)
 	}
 
 	srv, err := server.NewServer(conf, store)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("server couldn't be created", err)
 	}
-
-	defer srv.Close()
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: units.GiB,
@@ -47,13 +45,15 @@ func main() {
 
 	app.Use(recover.New())
 	app.Use(logger.New())
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "dss-main Metrics Page"}))
+	app.Use(cors.New())
+	//app.Get("/metrics", monitor.New(monitor.Config{Title: "dss-main Metrics Page"}))
 
-	app.Post("/upload", srv.Upload)
+	app.Put("/upload", srv.Upload)
 	app.Post("/mkdir", srv.Mkdir)
 
 	app.Post("/rename", srv.Rename)
 	app.Get("/status/:id", srv.Status)
+	app.Get("/dir/*", srv.Dir)
 
 	dfs, err := fs.New(store)
 	if err != nil {

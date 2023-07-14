@@ -1,0 +1,24 @@
+# fly.toml app configuration file generated for dss-main on 2023-07-06T22:26:01+03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "dss-main"
+primary_region = "cdg"
+
+[env]
+LOG_LEVEL = "debug"
+MONGO_DB_NAME = "DSS"
+MONGO_FILE_COLLECTION = "files"
+PORT = "8080"
+ROUTING_KEY = "DSS_QUEUE"
+FRAGMENT_SIZE = 8388608
+PUBLISH_TIMEOUT = 5
+CONSUMER_URL = "https://dss-uploader.fly.dev/status"
+
+[http_service]
+internal_port = 8080
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 0

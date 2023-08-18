@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/yakiroren/dss-common/models"
@@ -12,11 +13,12 @@ import (
 )
 
 type DisplayMetadata struct {
-	Id           interface{} `json:"Id"`
-	FileName     string      `json:"FileName"`
-	Size         int64       `json:"Size"`
-	IsDirectory  bool        `json:"IsDirectory"`
-	IsProcessing bool        `json:"IsProcessing"`
+	Id           interface{} `json:"id"`
+	FileName     string      `json:"name"`
+	Size         string      `json:"size"`
+	IsDirectory  bool        `json:"directory"`
+	IsProcessing bool        `json:"processing"`
+	Path         string      `json:"path"`
 }
 
 func (s *Server) Dir(ctx *fiber.Ctx) error {
@@ -42,9 +44,10 @@ func (s *Server) Dir(ctx *fiber.Ctx) error {
 		list = append(list, DisplayMetadata{
 			Id:           file.Id,
 			FileName:     file.FileName,
-			Size:         file.FileSize,
+			Size:         humanize.IBytes(uint64(file.FileSize)),
 			IsDirectory:  file.IsDirectory,
 			IsProcessing: file.IsHidden,
+			Path:         filepath.Join(path, file.FileName),
 		})
 	}
 	if err := ctx.JSON(list); err != nil {

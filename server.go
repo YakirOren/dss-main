@@ -46,14 +46,16 @@ func main() {
 	app.Use(recover.New())
 	app.Use(logger.New())
 	app.Use(cors.New())
-	//app.Get("/metrics", monitor.New(monitor.Config{Title: "dss-main Metrics Page"}))
 
-	app.Put("/upload", srv.Upload)
-	app.Post("/mkdir", srv.Mkdir)
+	api := app.Group("/api")
 
-	app.Post("/rename", srv.Rename)
-	app.Get("/status/:id", srv.Status)
-	app.Get("/dir/*", srv.Dir)
+	v1 := api.Group("/v1")
+
+	v1.Post("/upload", srv.Upload)
+	v1.Post("/mkdir", srv.Mkdir)
+	v1.Post("/rename", srv.Rename)
+	v1.Get("/status/:id", srv.Status)
+	v1.Get("/dir/*", srv.Dir)
 
 	dfs, err := fs.New(store)
 	if err != nil {

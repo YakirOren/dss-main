@@ -6,6 +6,7 @@ import (
 	"dss-main/fs"
 	"dss-main/server"
 	"fmt"
+	"github.com/docker/go-units"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/caarlos0/env/v7"
@@ -39,6 +40,7 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
+		BodyLimit:             units.GiB * 5,
 		ReduceMemoryUsage:     true,
 		DisableStartupMessage: true,
 	})

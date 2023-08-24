@@ -21,19 +21,11 @@ import (
 type Server struct {
 	datastore    db.DataStore
 	fragmentSize int64
-	publisher    *rabbit.Publisher
+	Publisher    rabbit.Config
 }
 
 func NewServer(conf *config.Config, datastore db.DataStore) (*Server, error) {
-	logger := log.New()
-
-	pub, err := rabbit.New(conf.Publisher, logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create rabbit publisher: %w", err)
-	}
-
 	return &Server{
-		publisher:    pub,
 		datastore:    datastore,
 		fragmentSize: conf.FragmentSize,
 	}, nil
@@ -94,13 +86,17 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 }
 
 func (s *Server) fragment(totalFragments int, src io.Reader, id string) (bool, error) {
+	logger := log.New()
+
+	pub, err := rabbit.New(s.Publisher, logger)
+	if err != nil {
+		return false, fmt.Errorf("failed to create rabbit publisher: %w", err)
+	}
+
 	content := &bytes.Buffer{}
 	log.Info("Total fragments ", totalFragments)
 
-	err := s.publisher.NotifyConsumer()
-	if err != nil {
-		log.Error(err)
-	}
+	pub.NotifyConsumers()
 
 	for i := 1; i <= totalFragments; i++ {
 		_, err := io.CopyN(content, src, s.fragmentSize)
@@ -110,7 +106,7 @@ func (s *Server) fragment(totalFragments int, src io.Reader, id string) (bool, e
 			return false, fiber.ErrInternalServerError
 		}
 
-		if err = s.publisher.PushMessage(id, i, content.Bytes()); err != nil {
+		if err = pub.PushMessage(id, i, content.Bytes()); err != nil {
 			log.Error(err)
 			return false, fiber.ErrInternalServerError
 		}
@@ -119,6 +115,8 @@ func (s *Server) fragment(totalFragments int, src io.Reader, id string) (bool, e
 
 		content.Reset()
 	}
+
+	pub.Close()
 
 	return true, nil
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/caarlos0/env/v7"
-	"github.com/docker/go-units"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -40,7 +39,8 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
-		BodyLimit: units.GiB,
+		ReduceMemoryUsage:     true,
+		DisableStartupMessage: true,
 	})
 
 	app.Use(recover.New())

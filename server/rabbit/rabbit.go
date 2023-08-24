@@ -11,17 +11,18 @@ import (
 )
 
 type Config struct {
-	RabbitURL      string `env:"RABBIT_URL,required,notEmpty"`
-	ConsumerURL    string `env:"CONSUMER_URL,required,notEmpty"`
-	RoutingKey     string `env:",required,notEmpty"`
-	PublishTimeout int    `env:",required,notEmpty"`
+	RabbitURL      string   `env:"RABBIT_URL,required,notEmpty"`
+	ConsumerURL    []string `env:"CONSUMER_URL,required,notEmpty"`
+	RoutingKey     string   `env:",required,notEmpty"`
+	PublishTimeout int      `env:",required,notEmpty"`
 }
 
 type Publisher struct {
 	publisher   *rabbitmq.Publisher
 	routingKey  string
 	timeout     time.Duration
-	consumerURL string
+	consumerURL []string
+	conn        *rabbitmq.Conn
 }
 
 func New(conf Config, logger *log.Logger) (*Publisher, error) {
@@ -47,6 +48,7 @@ func New(conf Config, logger *log.Logger) (*Publisher, error) {
 	logger.Debug("publish timeout ", timeout)
 
 	return &Publisher{
+		conn:        conn,
 		consumerURL: conf.ConsumerURL,
 		publisher:   publisher,
 		routingKey:  conf.RoutingKey,
@@ -54,9 +56,24 @@ func New(conf Config, logger *log.Logger) (*Publisher, error) {
 	}, nil
 }
 
-func (pub *Publisher) NotifyConsumer() error {
-	log.Debug("triggering consumer")
-	response, err := http.Get(pub.consumerURL)
+func (pub *Publisher) Close() {
+	pub.publisher.Close()
+	pub.conn.Close()
+}
+
+func (pub *Publisher) NotifyConsumers() {
+	log.Debug("triggering consumers")
+
+	for _, url := range pub.consumerURL {
+		err := call(url)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+func call(url string) error {
+	response, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -70,9 +87,7 @@ func (pub *Publisher) NotifyConsumer() error {
 	if err := json.NewDecoder(response.Body).Decode(&res); err != nil {
 		return err
 	}
-
 	log.Debug("response from consumer ", res.Status)
-
 	return nil
 }
 func (pub *Publisher) PushMessage(id string, fragmentNumber int, content []byte) error {

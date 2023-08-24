@@ -14,11 +14,11 @@ PORT = "8080"
 ROUTING_KEY = "DSS_QUEUE"
 FRAGMENT_SIZE = 8388608
 PUBLISH_TIMEOUT = 5
-CONSUMER_URL = "https://dss-uploader.fly.dev/status"
+CONSUMER_URL = "https://dss-uploader.fly.dev/status, https://dss-uploader.onrender.com/status"
 
 [http_service]
 internal_port = 8080
 force_https = true
-auto_stop_machines = true
+auto_stop_machines = false
 auto_start_machines = true
-min_machines_running = 0
+min_machines_running = 1

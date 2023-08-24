@@ -26,6 +26,7 @@ type Server struct {
 
 func NewServer(conf *config.Config, datastore db.DataStore) (*Server, error) {
 	return &Server{
+		Publisher:    conf.Publisher,
 		datastore:    datastore,
 		fragmentSize: conf.FragmentSize,
 	}, nil

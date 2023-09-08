@@ -16,6 +16,7 @@ import (
 	"math"
 	"mime/multipart"
 	"net/http"
+	"time"
 )
 
 type Server struct {
@@ -67,6 +68,8 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 		FileName:       filename,
 		FileSize:       file.Size,
 		CurrentSize:    0,
+		CreationTime:   time.Now().Unix(),
+		Tags:           []string{},
 		IsDirectory:    false,
 		Path:           targetPath,
 		Fragments:      []models.Fragment{},

@@ -43,6 +43,7 @@ func main() {
 		BodyLimit:             units.GiB * 5,
 		ReduceMemoryUsage:     true,
 		DisableStartupMessage: true,
+		UnescapePath:          true,
 	})
 
 	app.Use(recover.New())
@@ -55,7 +56,9 @@ func main() {
 
 	v1.Post("/upload", srv.Upload)
 	v1.Post("/mkdir", srv.Mkdir)
-	v1.Post("/rename", srv.Rename)
+	v1.Post("/rename/:id", srv.Rename)
+	v1.Post("/move/:id", srv.Move)
+	v1.Delete("/delete/:id", srv.Delete)
 	v1.Get("/status/:id", srv.Status)
 	v1.Get("/dir/*", srv.Dir)
 

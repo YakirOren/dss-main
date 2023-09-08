@@ -68,7 +68,7 @@ func (f File) Readdir(count int) ([]fs.FileInfo, error) {
 }
 
 func (f *File) Stat() (fs.FileInfo, error) {
-	metadata, found := f.datastore.GetMetadataByID(context.Background(), f.metadata.Id)
+	metadata, found := f.datastore.GetMetadataByID(context.Background(), f.metadata.Id.Hex())
 	if !found {
 		return nil, nil
 	}

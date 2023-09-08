@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 )
 
@@ -13,14 +12,9 @@ const (
 )
 
 func (s *Server) Status(ctx *fiber.Ctx) error {
-	objectID := ctx.Params("id")
+	id := ctx.Params("id")
 
-	hex, err := primitive.ObjectIDFromHex(objectID)
-	if err != nil {
-		return err
-	}
-
-	metadata, exists := s.datastore.GetMetadataByID(ctx.Context(), hex)
+	metadata, exists := s.datastore.GetMetadataByID(ctx.Context(), id)
 
 	if !exists {
 		return fiber.NewError(http.StatusNotFound, "file not found")

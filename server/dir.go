@@ -101,19 +101,52 @@ func (s *Server) Mkdir(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (s *Server) Rename(ctx *fiber.Ctx) error {
-	oldpath := ctx.FormValue("oldpath")
-	if oldpath == "" {
-		return fiber.NewError(http.StatusBadRequest, "oldpath cant be empty")
-	}
+func (s *Server) Move(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
 
-	if oldpath == "/" {
-		return fiber.NewError(http.StatusBadRequest, "'/' cant be renamed")
+	metadata, exists := s.datastore.GetMetadataByID(ctx.Context(), id)
+	if !exists {
+		return fiber.NewError(http.StatusNotFound, "file not found")
 	}
 
 	newpath := ctx.FormValue("newpath")
 	if newpath == "" {
 		return fiber.NewError(http.StatusBadRequest, "newpath cant be empty")
+	}
+
+	valid := validatePath(newpath)
+	if !valid {
+		return fiber.NewError(http.StatusBadRequest, "the provided path is not valid")
+	}
+
+	//TODO: validate that the target path exists
+
+	err := s.datastore.UpdateField(ctx.Context(), metadata.Id.Hex(), "path", newpath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) Rename(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+
+	metadata, exists := s.datastore.GetMetadataByID(ctx.Context(), id)
+	if !exists {
+		return fiber.NewError(http.StatusNotFound, "file not found")
+	}
+
+	newName := ctx.FormValue("new_name")
+	if newName == "" {
+		return fiber.NewError(http.StatusBadRequest, "new_name cant be empty")
+	}
+
+	newName = s.fixFilename(ctx.Context(), newName, metadata.Path)
+
+	err := s.datastore.UpdateField(ctx.Context(), metadata.Id.Hex(), "name", newName)
+	if err != nil {
+		return err
 	}
 
 	return nil

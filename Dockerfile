@@ -1,4 +1,4 @@
-FROM golang:1.19 AS base
+FROM golang:1.21.1 AS base
 
 WORKDIR MAIN
 ENV CGO_ENABLED=0
@@ -13,7 +13,7 @@ COPY storage storage
 RUN go build -tags netgo -ldflags '-w -s -extldflags "-static"' -o /go/bin/main server.go
 
 ########
-FROM alpine:3.14.4 AS final
+FROM alpine:3.18.3 AS final
 
 WORKDIR MAIN
 

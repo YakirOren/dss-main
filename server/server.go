@@ -2,21 +2,23 @@ package server
 
 import (
 	"bytes"
-	"dss-main/config"
-	"dss-main/server/rabbit"
 	"errors"
 	"fmt"
+	"io"
+	"math"
+	"mime/multipart"
+	"net/http"
+	"time"
+
+	"dss-main/config"
+	"dss-main/server/rabbit"
+
 	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/yakiroren/dss-common/db"
 	"github.com/yakiroren/dss-common/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"io"
-	"math"
-	"mime/multipart"
-	"net/http"
-	"time"
 )
 
 type Server struct {
@@ -54,8 +56,8 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 	}
 
 	defer func(src multipart.File) {
-		if err := src.Close(); err != nil {
-			log.Error(err)
+		if closeErr := src.Close(); closeErr != nil {
+			log.Error(closeErr)
 		}
 	}(src)
 
@@ -85,7 +87,8 @@ func (s *Server) Upload(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	ctx.Status(http.StatusCreated).SendString(fileID)
+	_ = ctx.Status(http.StatusCreated).SendString(fileID)
+
 	return nil
 }
 
@@ -103,8 +106,9 @@ func (s *Server) fragment(totalFragments int, src io.Reader, id string) (bool, e
 	pub.NotifyConsumers()
 
 	for i := 1; i <= totalFragments; i++ {
-		_, err := io.CopyN(content, src, s.fragmentSize)
+		_, err = io.CopyN(content, src, s.fragmentSize)
 		if errors.Is(err, io.EOF) {
+			log.Debug("got EOF")
 		} else if err != nil {
 			log.Error(err)
 			return false, fiber.ErrInternalServerError

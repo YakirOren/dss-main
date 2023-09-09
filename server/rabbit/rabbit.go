@@ -3,11 +3,13 @@ package rabbit
 import (
 	"context"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
-	"github.com/wagslane/go-rabbitmq"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/wagslane/go-rabbitmq"
 )
 
 type Config struct {
@@ -73,7 +75,7 @@ func (pub *Publisher) NotifyConsumers() {
 }
 
 func call(url string) error {
-	response, err := http.Get(url)
+	response, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -84,14 +86,14 @@ func call(url string) error {
 		Timestamp time.Time `json:"timestamp"`
 	}{}
 
-	if err := json.NewDecoder(response.Body).Decode(&res); err != nil {
-		return err
+	if decodeErr := json.NewDecoder(response.Body).Decode(&res); decodeErr != nil {
+		return fmt.Errorf("failed to parse jsdon from consumer: %w", decodeErr)
 	}
 	log.Debug("response from consumer ", res.Status)
 	return nil
 }
-func (pub *Publisher) PushMessage(id string, fragmentNumber int, content []byte) error {
 
+func (pub *Publisher) PushMessage(id string, fragmentNumber int, content []byte) error {
 	headers := rabbitmq.Table{"id": id, "fragment_number": strconv.Itoa(fragmentNumber)}
 
 	publishContext, cancel := context.WithTimeout(context.Background(), pub.timeout)
@@ -102,5 +104,4 @@ func (pub *Publisher) PushMessage(id string, fragmentNumber int, content []byte)
 		rabbitmq.WithPublishOptionsMandatory,
 		rabbitmq.WithPublishOptionsTimestamp(time.Now()),
 		rabbitmq.WithPublishOptionsPersistentDelivery)
-
 }

@@ -1,8 +1,9 @@
 package storage_test
 
 import (
-	"dss-main/storage"
 	"testing"
+
+	"dss-main/storage"
 
 	"github.com/yakiroren/dss-common/models"
 

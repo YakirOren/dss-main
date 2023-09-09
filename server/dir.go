@@ -3,17 +3,18 @@ package server
 import (
 	"context"
 	"errors"
+	"net/http"
+	"path/filepath"
+
 	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/yakiroren/dss-common/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net/http"
-	"path/filepath"
 )
 
 type DisplayMetadata struct {
-	Id           interface{} `json:"id"`
+	ID           interface{} `json:"id"`
 	FileName     string      `json:"name"`
 	Size         string      `json:"size"`
 	IsDirectory  bool        `json:"directory"`
@@ -42,7 +43,7 @@ func (s *Server) Dir(ctx *fiber.Ctx) error {
 		}
 
 		list = append(list, DisplayMetadata{
-			Id:           file.Id,
+			ID:           file.Id,
 			FileName:     file.FileName,
 			Size:         humanize.IBytes(uint64(file.FileSize)),
 			IsDirectory:  file.IsDirectory,
@@ -50,9 +51,8 @@ func (s *Server) Dir(ctx *fiber.Ctx) error {
 			Path:         filepath.Join(path, file.FileName),
 		})
 	}
-	if err := ctx.JSON(list); err != nil {
-		ctx.Status(http.StatusInternalServerError)
-		return nil
+	if jsonEncodeErr := ctx.JSON(list); jsonEncodeErr != nil {
+		return fiber.ErrInternalServerError
 	}
 
 	return nil
@@ -119,7 +119,7 @@ func (s *Server) Move(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "the provided path is not valid")
 	}
 
-	//TODO: validate that the target path exists
+	// TODO: validate that the target path exists
 
 	err := s.datastore.UpdateField(ctx.Context(), metadata.Id.Hex(), "path", newpath)
 	if err != nil {

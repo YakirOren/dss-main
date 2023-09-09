@@ -2,11 +2,12 @@ package fs
 
 import (
 	"context"
-	"dss-main/storage"
 	"errors"
 	"io"
 	"io/fs"
 	"path/filepath"
+
+	"dss-main/storage"
 
 	"github.com/yakiroren/dss-common/db"
 	"github.com/yakiroren/dss-common/models"
@@ -39,11 +40,11 @@ func (f File) Close() error {
 	return nil
 }
 
-func (f File) Seek(offset int64, whence int) (int64, error) {
+func (f File) Seek(_ int64, _ int) (int64, error) {
 	return 0, nil
 }
 
-func (f File) Readdir(count int) ([]fs.FileInfo, error) {
+func (f File) Readdir(_ int) ([]fs.FileInfo, error) {
 	if !f.metadata.IsDir() {
 		return nil, errors.New("file is not a directory")
 	}

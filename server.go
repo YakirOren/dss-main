@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
+
 	"dss-main/config"
 	"dss-main/fs"
 	"dss-main/server"
-	"fmt"
+
 	"github.com/docker/go-units"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
@@ -39,8 +41,10 @@ func main() {
 		log.Fatal("server couldn't be created", err)
 	}
 
+	const limit = units.GiB * 5
+
 	app := fiber.New(fiber.Config{
-		BodyLimit:             units.GiB * 5,
+		BodyLimit:             limit,
 		ReduceMemoryUsage:     true,
 		DisableStartupMessage: true,
 		UnescapePath:          true,
@@ -77,12 +81,16 @@ func main() {
 
 	_, err = dfs.Open("/")
 	if err != nil {
-		if err := srv.CreateDir(context.Background(), "/", "/"); err != nil {
-			log.Fatal(err)
-		}
-		log.Info("created root dir")
+		createRootDir(srv)
 	}
 
 	serverAddr := fmt.Sprintf(":%s", conf.Port)
 	log.Error(app.Listen(serverAddr))
+}
+
+func createRootDir(srv *server.Server) {
+	if err := srv.CreateDir(context.Background(), "/", "/"); err != nil {
+		log.Fatal(err)
+	}
+	log.Info("created root dir")
 }

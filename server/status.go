@@ -2,14 +2,21 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/gofiber/fiber/v2"
 	"net/http"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 const (
 	Done     = "done"
 	Progress = "in progress"
 )
+
+type Status struct {
+	State             string `json:"State"`
+	TotalFragments    int    `json:"TotalFragments"`
+	UploadedFragments int    `json:"UploadedFragments"`
+}
 
 func (s *Server) Status(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
@@ -25,11 +32,7 @@ func (s *Server) Status(ctx *fiber.Ctx) error {
 		state = Progress
 	}
 
-	marshal, err := json.Marshal(struct {
-		State             string
-		TotalFragments    int
-		UploadedFragments int
-	}{
+	marshal, err := json.Marshal(Status{
 		State:             state,
 		TotalFragments:    metadata.TotalFragments,
 		UploadedFragments: len(metadata.Fragments),
@@ -38,9 +41,8 @@ func (s *Server) Status(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	if err := ctx.Send(marshal); err != nil {
-		ctx.Status(http.StatusInternalServerError)
-		return nil
+	if err = ctx.Send(marshal); err != nil {
+		return fiber.ErrInternalServerError
 	}
 
 	return nil

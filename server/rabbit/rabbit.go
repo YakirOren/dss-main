@@ -75,7 +75,14 @@ func (pub *Publisher) NotifyConsumers() {
 }
 
 func call(url string) error {
-	response, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	start := time.Now()
+
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return err
 	}
@@ -89,7 +96,9 @@ func call(url string) error {
 	if decodeErr := json.NewDecoder(response.Body).Decode(&res); decodeErr != nil {
 		return fmt.Errorf("failed to parse jsdon from consumer: %w", decodeErr)
 	}
-	log.Debug("response from consumer ", res.Status)
+	elapsed := time.Since(start)
+
+	log.Debugf("response from consumer %s, took %s", res.Status, elapsed)
 	return nil
 }
 

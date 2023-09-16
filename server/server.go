@@ -103,7 +103,7 @@ func (s *Server) fragment(totalFragments int, src io.Reader, id string) (bool, e
 	content := &bytes.Buffer{}
 	log.Info("Total fragments ", totalFragments)
 
-	pub.NotifyConsumers()
+	go pub.NotifyConsumers()
 
 	for i := 1; i <= totalFragments; i++ {
 		_, err = io.CopyN(content, src, s.fragmentSize)

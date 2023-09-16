@@ -67,10 +67,11 @@ func (pub *Publisher) NotifyConsumers() {
 	log.Debug("triggering consumers")
 
 	for _, url := range pub.consumerURL {
-		err := call(url)
-		if err != nil {
-			log.Error(err)
-		}
+		go func(url string) {
+			if err := call(url); err != nil {
+				log.Error(err)
+			}
+		}(url)
 	}
 }
 
@@ -94,7 +95,7 @@ func call(url string) error {
 	}{}
 
 	if decodeErr := json.NewDecoder(response.Body).Decode(&res); decodeErr != nil {
-		return fmt.Errorf("failed to parse jsdon from consumer: %w", decodeErr)
+		return fmt.Errorf("failed to parse json from consumer: %w", decodeErr)
 	}
 	elapsed := time.Since(start)
 

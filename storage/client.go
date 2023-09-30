@@ -1,26 +1,24 @@
-package storage
+package ds
 
 import (
 	"context"
-
-	"cloud.google.com/go/storage"
-
-	"google.golang.org/api/option"
+	"github.com/yakiroren/dss-common/models"
+	"io"
+	"sort"
+	"strconv"
 )
 
-const bucketName = "discord"
-
-type Client struct {
-	gcloud     *storage.Client
-	bucketName string
+type Client interface {
+	ReadFragments(ctx context.Context, fragments []models.Fragment) (io.ReadCloser, error)
 }
 
-func NewClient() (*Client, error) {
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx, option.WithoutAuthentication())
-	if err != nil {
-		return nil, err
-	}
+func SortFragments(fragments []models.Fragment) []models.Fragment {
+	sort.Slice(fragments, func(i, j int) bool {
+		a, _ := strconv.Atoi(fragments[i].Name)
+		b, _ := strconv.Atoi(fragments[j].Name)
 
-	return &Client{gcloud: client, bucketName: bucketName}, nil
+		return a < b
+	})
+
+	return fragments
 }

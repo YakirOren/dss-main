@@ -2,17 +2,17 @@ package fs
 
 import (
 	"context"
+	ds "dss-main/storage"
+	discord "dss-main/storage/Discord"
 	"errors"
 	"net/http"
 	"strings"
-
-	"dss-main/storage"
 
 	"github.com/yakiroren/dss-common/db"
 )
 
 type FS struct {
-	storage   *storage.Client
+	storage   ds.Client
 	datastore db.DataStore
 }
 
@@ -34,10 +34,5 @@ func (fs FS) Open(path string) (http.File, error) {
 }
 
 func New(store db.DataStore) (*FS, error) {
-	storageClient, err := storage.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	return &FS{datastore: store, storage: storageClient}, nil
+	return &FS{datastore: store, storage: discord.Client{}}, nil
 }

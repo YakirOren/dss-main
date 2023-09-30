@@ -1,9 +1,8 @@
-package storage_test
+package GCP_test
 
 import (
+	"dss-main/storage/GCP"
 	"testing"
-
-	"dss-main/storage"
 
 	"github.com/yakiroren/dss-common/models"
 
@@ -12,7 +11,7 @@ import (
 
 func Test_sortFragments(t *testing.T) {
 	require.Equal(t,
-		storage.SortFragments(unsortedFragments()),
+		GCP.SortFragments(unsortedFragments()),
 		sortedFragments())
 }
 

@@ -1,20 +1,18 @@
-package storage
+package GCP
 
 import (
-	"context"
-	"fmt"
-	"io"
-	"sort"
-	"strconv"
-
 	"cloud.google.com/go/storage"
+	"context"
+	ds "dss-main/storage"
+	"fmt"
 	"github.com/yakiroren/dss-common/models"
+	"io"
 )
 
 func (client Client) ReadFragments(ctx context.Context, fragments []models.Fragment) (io.ReadCloser, error) {
 	var readers []io.ReadCloser
 
-	sortedFragments := SortFragments(fragments)
+	sortedFragments := ds.SortFragments(fragments)
 	for _, fragment := range sortedFragments {
 		contentReader, err := client.getFragmentContent(ctx, fragment)
 		if err != nil {
@@ -24,19 +22,8 @@ func (client Client) ReadFragments(ctx context.Context, fragments []models.Fragm
 		readers = append(readers, contentReader)
 	}
 
-	contentMultiReader := CombineReaders(readers...)
+	contentMultiReader := ds.CombineReaders(readers...)
 	return contentMultiReader, nil
-}
-
-func SortFragments(fragments []models.Fragment) []models.Fragment {
-	sort.Slice(fragments, func(i, j int) bool {
-		a, _ := strconv.Atoi(fragments[i].Name)
-		b, _ := strconv.Atoi(fragments[j].Name)
-
-		return a < b
-	})
-
-	return fragments
 }
 
 func (client Client) getFragmentContent(ctx context.Context, fragment models.Fragment) (*storage.Reader, error) {

@@ -2,12 +2,11 @@ package fs
 
 import (
 	"context"
+	ds "dss-main/storage"
 	"errors"
 	"io"
 	"io/fs"
 	"path/filepath"
-
-	"dss-main/storage"
 
 	"github.com/yakiroren/dss-common/db"
 	"github.com/yakiroren/dss-common/models"
@@ -17,7 +16,7 @@ type File struct {
 	reader    io.ReadCloser
 	metadata  *models.FileMetadata
 	datastore db.DataStore
-	storage   *storage.Client
+	storage   ds.Client
 }
 
 func (f *File) Read(p []byte) (int, error) {
